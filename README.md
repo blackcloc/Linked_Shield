@@ -1,4 +1,4 @@
-# 连携护盾（Linked Shield）v1.0.4
+# 连携护盾（Linked Shield）v1.0.5
 
 [简体中文](README.md) | [English](README.en.md)
 
@@ -382,6 +382,84 @@ src/main/resources/
 - 连携图标的人数**含自己**（3 名队友 = 4）；无队友时不显示图标
 - 队伍名最长 24 个字符；小队数据存在主世界存档里（`data` 附件），换存档 = 换小队
 - 客户端 HUD 布局取自**客户端自己的** `settings.json`；多人服务器上“小队人数上限”等玩法数值以服务端为准
+- 
+
+连携护盾 Linked Shield v1.0.5 更新说明
+
+> 本版：**1.0.5** · 上一版：1.0.4 · Minecraft 1.21.11 · NeoForge 21.11.x
+
+本版把「小队内友军保护」补完整，并重做了队友条下方的状态效果图标。
+
+---
+
+## 一、友军保护补完
+
+1.0.4 已经能做到「同队玩家之间打不出伤害」，但实测发现还剩两个洞。
+
+### 1. 爆炸击退免疫（新增）
+
+**问题**：伤害虽然被取消了，但队友引爆的 TNT / 末地水晶 / 重生锚**照样把你掀飞**。
+
+原因在原版 `ServerExplosion` 里 —— 击退写在伤害判定的 `if` **外面**，无条件执行：
+
+```java
+if (flag) {
+    entity.hurtServer(...);        // ← 伤害，会被友军免疫取消
+}
+// ↓ 与伤害无关，照样执行
+vec32 = EventHooks.getExplosionKnockback(this.level, this, entity, vec32, blocks);
+entity.push(vec32);
+```
+
+**修法**：挂 NeoForge 的 `ExplosionKnockbackEvent`（事件本身不可取消，但可以改速度），
+队友引爆时把击退速度设成零向量。归属解析用 `Explosion#getIndirectSourceEntity()` ——
+它会把 **TNT 解析成点火者、投掷物解析成投掷者**，所以真实 TNT、末地水晶、重生锚，
+以及走同一条爆炸路径的**风弹**全都覆盖到了。
+
+### 2. 负面药水效果免疫（新增）
+
+**问题**：喷溅 / 滞留药水的**非瞬间效果**（毒、缓慢、虚弱…）走的是
+`LivingEntity#addEffect`，**根本不产生伤害事件**，所以伤害免疫够不着 ——
+队友一发缓慢药水还是能挂到你身上。
+
+**修法**：挂 `MobEffectEvent.Applicable`（NeoForge 在
+`CommonHooks.canMobEffectBeApplied` 里触发，早于效果写入），队友丢来的**负面**效果
+直接设成 `DO_NOT_APPLY`。
+
+**增益效果不受影响** —— 队友给你加血、加再生照常生效。
+
+顺带修了一个隐藏 bug：归属解析的 owner 链原来只认 `Projectile` 和 `OwnableEntity`，
+而**滞留药水云 `AreaEffectCloud` 只实现 `TraceableEntity`**，导致云的来源解析不到投掷者。
+本版补上了这一支。
+
+### 本来就正确、本版补上测试的部分
+
+- 喷溅型伤害药水、滞留药水云的**瞬间伤害**：归属能正确解析到投掷者，免疫一直生效
+- **药箭**：原版把药水效果与点燃都放在 `if (entity.hurtOrSimulate(...))` 块内，
+  箭矢伤害一旦被取消，效果与火焰随之一并跳过 —— 所以队友的火焰弓也点不着你
+
+---
+
+## 二、队友效果图标重做
+
+以前是在 HUD 里自己拼图标，本版改成 **「原版 18×18 效果图标的等比缩小版」**：
+
+- 同步时多带 `amplifier` / `ambient`，客户端据此**重建 `MobEffectInstance`**，
+  走原版 `Gui#renderEffects` 的同一条路径，只是画在 **0.5 缩放**的 pose 里
+- 因此 **`IClientMobEffectExtensions` 也认了** —— 其他模组自定义渲染的效果图标能正常显示
+- 模组标记为「不在 HUD 显示」的效果会被尊重
+- 保留原版配色与「快到期闪烁」（剩余 &lt; 200 tick）
+
+---
+
+## 三、兼容性 / 升级注意
+
+- **网络包升到 v3**（效果数据多带等级与环境标记）。
+  服务端与客户端**必须同为 1.0.5**，混用会被 NeoForge 的 payload 版本校验拒绝连接。
+- 配置项、存档数据格式**没有变化**，`party.friendlyFire` 等配置沿用原样。
+- 既有的护盾值、小队数据不受影响。
+
+---
 
 ---
 
