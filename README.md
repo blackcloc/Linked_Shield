@@ -1,4 +1,5 @@
 # 连携护盾（Linked Shield）v1.0.4
+[简体中文](README.md) | [English](README.en.md)
 
 > 作者：**blackcloc** · modid `linkedshield` · **Minecraft 1.21.11 + NeoForge 21.11.x**
 
