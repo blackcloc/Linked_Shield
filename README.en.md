@@ -387,3 +387,57 @@ src/main/resources/
 - The client HUD layout comes from the **client's own** `settings.json`; on multiplayer servers, gameplay values such as the maximum party size are decided by the server
 
 ---
+
+Linked Shield v1.0.5 Release Notes
+This version: 1.0.5 · Previous version: 1.0.4 · Minecraft 1.21.11 · NeoForge 21.11.x
+
+This version completes "friendly fire protection within a party" and reworks the status effect icons below the teammate bar.
+
+1. Friendly Fire Protection Completion
+1.0.4 already ensured that players on the same team cannot damage each other, but testing revealed two remaining loopholes.
+
+1. Explosion Knockback Immunity (New)
+Problem: Although damage is already cancelled, TNT / End Crystals / Respawn Anchors detonated by teammates still send you flying.
+
+The cause lies in vanilla ServerExplosion — knockback is written outside the damage-check if and executes unconditionally:
+
+java
+if (flag) {
+    entity.hurtServer(...);        // ← damage, cancelled by friendly fire immunity
+}
+// ↓ unrelated to damage, still executes
+vec32 = EventHooks.getExplosionKnockback(this.level, this, entity, vec32, blocks);
+entity.push(vec32);
+Fix: Hook NeoForge's ExplosionKnockbackEvent (the event itself is not cancellable, but the velocity can be modified). When a teammate detonates the explosion, set the knockback velocity to the zero vector. Ownership resolution uses Explosion#getIndirectSourceEntity() — it resolves TNT to the igniter and projectiles to the thrower, so real TNT, End Crystals, Respawn Anchors, and Wind Charges that follow the same explosion path are all covered.
+
+2. Negative Potion Effect Immunity (New)
+Problem: Non-instant effects from splash / lingering potions (poison, slowness, weakness, etc.) go through LivingEntity#addEffect and do not generate a damage event at all, so damage immunity cannot reach them — a teammate's Slowness potion can still land on you.
+
+Fix: Hook MobEffectEvent.Applicable (triggered by NeoForge in CommonHooks.canMobEffectBeApplied, before the effect is written). Negative effects thrown by teammates are set to DO_NOT_APPLY directly.
+
+Positive effects are unaffected — teammates healing you or granting regeneration still works as usual.
+
+Also fixed a hidden bug: the ownership resolution owner chain previously only recognized Projectile and OwnableEntity, while lingering potion clouds AreaEffectCloud only implement TraceableEntity, so the cloud's source could not be resolved to the thrower. This version adds that branch.
+
+Parts That Were Already Correct, Now Covered by Tests
+Instant damage from splash damage potions and lingering potion clouds: ownership correctly resolves to the thrower, and immunity has always worked.
+
+Tipped arrows: vanilla places both the potion effect and ignition inside the if (entity.hurtOrSimulate(...)) block. Once arrow damage is cancelled, the effect and fire are skipped along with it — so a teammate's Flame bow cannot set you on fire either.
+
+2. Teammate Effect Icon Rework
+Previously icons were assembled manually in the HUD. This version changes it to a proportionally scaled-down version of the vanilla 18×18 effect icon:
+
+Sync now carries amplifier / ambient, and the client uses them to rebuild a MobEffectInstance, going through the same path as vanilla Gui#renderEffects, just drawn in a 0.5-scaled pose.
+
+Therefore IClientMobEffectExtensions is also respected — custom-rendered effect icons from other mods display correctly.
+
+Effects that mods mark as "not displayed in HUD" are respected.
+
+Vanilla colors and the "expiring blink" (remaining < 200 ticks) are preserved.
+
+3. Compatibility / Upgrade Notes
+Network packet bumped to v3 (effect data now carries amplifier and ambient flag). Server and client must both be 1.0.5; mixing them will be rejected by NeoForge's payload version validation.
+
+Config options and save data format are unchanged; settings such as party.friendlyFire carry over as-is.
+
+Existing shield values and party data are unaffected.
