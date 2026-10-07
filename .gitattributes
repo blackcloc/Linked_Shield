@@ -1,0 +1,7 @@
+# 统一换行符：仓库内存 LF，避免 Windows 检出把 gradlew 变成 CRLF
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+gradlew text eol=lf
+*.png binary
+*.jar binary

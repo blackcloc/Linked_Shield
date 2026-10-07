@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="linkedshield-editor-version" content="__LINKEDSHIELD_EDITOR_VERSION__">
+<title>Linked Shield · settings.json</title>
+<style>
+:root{
+  --bg:#0d1117; --panel:#141b24; --panel2:#101720; --line:#22303f; --txt:#dbe6f2;
+  --dim:#8fa3b8; --accent:#4fc3f7; --shield:#4fc3f7; --hp:#5ec46a; --warn:#ffd479;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:13.5px/1.5 "Segoe UI",system-ui,"Microsoft YaHei",sans-serif}
+header{padding:16px 20px 12px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#131c26,#0f151d)}
+h1{margin:0;font-size:19px;letter-spacing:.4px}
+.sub{color:var(--dim);font-size:12px;margin-top:4px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+button{background:#1c2735;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:7px 12px;
+  cursor:pointer;font-size:12.5px}
+button:hover{border-color:var(--accent);color:#fff}
+button.primary{background:#12496b;border-color:#1d6f9e}
+#status{color:var(--warn);font-size:12px}
+main{padding:16px 20px 40px;max-width:1080px}
+fieldset{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px 14px;margin:0 0 14px}
+legend{padding:0 6px;color:var(--accent);font-size:12.5px;letter-spacing:.3px}
+.hint{color:var(--dim);font-size:11.5px;margin:2px 0 10px}
+.row{display:grid;grid-template-columns:1fr 132px;gap:10px;align-items:center;padding:5px 0;border-bottom:1px dashed #1b2634}
+.row:last-child{border-bottom:0}
+label{font-size:12.5px}
+label .k{display:block;color:var(--dim);font-size:11px;font-family:Consolas,monospace}
+input[type=number],input[type=text],select{width:100%;background:#0b1017;color:var(--txt);border:1px solid var(--line);
+  border-radius:6px;padding:5px 7px;font-size:12.5px}
+input[type=color]{width:100%;height:28px;background:#0b1017;border:1px solid var(--line);border-radius:6px}
+.chk{display:flex;justify-content:flex-end}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+/* HUD 预览：放在数值下面，按原版 1:1 比例（1 格 = 1 GUI 单位）绘制，无任何缩放 */
+.screen{position:relative;width:100%;max-width:640px;aspect-ratio:16/9;border:1px solid var(--line);border-radius:8px;
+  overflow:hidden;background:linear-gradient(180deg,#2b4a63 0%,#31536e 55%,#3a6046 55%,#2f5138 100%)}
+.hud{position:absolute;left:0;top:0;right:0;bottom:0}
+.plist{position:absolute;display:flex;flex-direction:column}
+.prow{position:relative;border-left:3px solid #6e8ba6;overflow:hidden;border-radius:2px}
+.prow .bg{position:absolute;inset:0}
+.prow .hpbg{position:absolute;left:2px;right:2px;bottom:0;height:5px;background:rgba(12,16,22,.9)}
+.prow .hp{position:absolute;left:2px;bottom:0;height:5px;background:var(--hp)}
+.prow .shbg{position:absolute;left:2px;right:2px;bottom:5px;height:3px;background:rgba(20,26,34,.85)}
+.prow .sh{position:absolute;left:2px;bottom:5px;height:3px;background:var(--shield)}
+.prow .nm{position:absolute;font-size:9px;color:#fff;text-shadow:1px 1px 0 #000;white-space:nowrap}
+.prow .idx{position:absolute;left:3px;top:2px;font-size:8px;color:#cfd8e3}
+.selfwrap{position:absolute}
+.selfhp{height:9px;background:#2a2f36;border:1px solid #000;position:relative;overflow:hidden}
+.selfhp i{position:absolute;left:0;top:0;bottom:0;background:#e04b4b}
+.selfshield{position:absolute;overflow:hidden}
+.selfshield .sb{position:absolute;inset:0;background:#4fc3f7}
+.selfshield .st{position:absolute;top:-1px;font-size:9px;color:#eaf6ff;text-shadow:1px 1px 0 #000;white-space:nowrap}
+/* 原版参照物（生命/饥饿/经验/快捷栏），按原版 GUI 坐标绘制 */
+.vanilla{position:absolute;inset:0;pointer-events:none;opacity:.95}
+.vhud{position:absolute;left:0;top:0}
+.vheart,.vfood{position:absolute;width:8px;height:8px;border:1px solid #000;border-radius:1px}
+.vheart{background:#e04b4b}
+.vheart.empty{background:#3a2222}
+.vfood{background:#a9702f}
+.vfood.empty{background:#33261a}
+.vxpbg{position:absolute;width:182px;height:5px;background:rgba(0,0,0,.75);border:1px solid #000}
+.vxp{position:absolute;height:3px;background:#80ff20}
+.vhotbar{position:absolute;width:182px;height:22px;background:rgba(28,30,34,.85);border:1px solid #000;border-radius:2px}
+.vslot{position:absolute;top:1px;width:20px;height:20px;background:rgba(139,139,139,.28);border:1px solid rgba(0,0,0,.45)}
+.vslot.sel{border:2px solid #fff;background:rgba(200,200,200,.35)}
+.vtag{position:absolute;font-size:8px;color:#dfe8f2;text-shadow:1px 1px 0 #000;background:rgba(0,0,0,.45);padding:0 3px;border-radius:2px}
+/* 可拖动 / 可滚轮调整的元素 */
+.plist,.selfwrap{cursor:move}
+.plist:hover,.selfwrap:hover{outline:1px dashed rgba(79,195,247,.75);outline-offset:2px}
+.plist.dragging,.selfwrap.dragging{outline:1px solid var(--accent);outline-offset:2px}
+.plist.dragging *,.selfwrap.dragging *{pointer-events:none}
+.legend2{display:flex;gap:14px;color:var(--dim);font-size:11.5px;margin:10px 0 0;flex-wrap:wrap}
+.legend2 i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.paste textarea{width:100%;max-width:960px;height:110px;background:#0b1017;color:var(--txt);border:1px solid var(--line);
+    border-radius:6px;padding:8px;font:12px/1.45 Consolas,monospace}
+.note{color:var(--dim);font-size:11.5px;margin-top:8px}
+a{color:var(--accent)}
+/* 语言切换（国旗） */
+.langBar{display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.langBar .lab{color:var(--dim);font-size:12px}
+.flagBtn{background:#16202c;border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:15px;line-height:1.1;
+  cursor:pointer;display:flex;align-items:center;gap:6px}
+.flagBtn small{font-size:10.5px;color:var(--dim)}
+.flagBtn:hover{border-color:var(--accent)}
+.flagBtn.active{border-color:var(--accent);background:#12496b}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Linked Shield</h1>
+  <div class="sub" id="subtitle"></div>
+  <div class="langBar" id="langBar"></div>
+  <div class="actions">
+    <button class="primary" id="btnSave" data-i18n="linkedshield.editor.ui.save"></button>
+    <button id="btnSaveAs" data-i18n="linkedshield.editor.ui.saveAs"></button>
+    <button id="btnCopy" data-i18n="linkedshield.editor.ui.copy"></button>
+    <button id="btnReset" data-i18n="linkedshield.editor.ui.reset"></button>
+    <span id="status"></span>
+  </div>
+</header>
+
+<main>
+  <section id="form"></section>
+
+  <fieldset class="previewBox">
+    <legend id="previewLegend"></legend>
+    <div class="hint" id="previewHint"></div>
+    <div class="screen">
+      <div class="hud" id="hud">
+        <div class="vanilla" id="vanilla"><div class="vhud" id="vhud"></div></div>
+        <div class="plist" id="plist"></div>
+        <div class="selfwrap" id="selfwrap">
+          <div class="selfhp"><i style="width:72%"></i></div>
+          <div class="selfshield" id="selfshield">
+            <div class="sb"></div><div class="st" id="selfshieldtext"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend2">
+      <span><i style="background:#5ec46a"></i><span id="legendHp"></span></span>
+      <span><i style="background:#4fc3f7"></i><span id="legendShield"></span></span>
+      <span><i style="background:#ffd479"></i><span id="legendName"></span></span>
+      <span><i style="background:#8b8b8b"></i><span id="legendVanilla"></span></span>
+    </div>
+    <div class="note" id="vanillaNote"></div>
+    <div class="row" style="grid-template-columns:1fr 90px">
+      <label id="showVanillaLabel"></label>
+      <div class="chk"><input type="checkbox" id="showVanilla" checked></div>
+    </div>
+  </fieldset>
+
+  <fieldset class="paste">
+    <legend id="importLegend"></legend>
+    <div class="hint" id="importHint"></div>
+    <textarea id="importBox" placeholder='{ "party": { "maxPartySize": 4 } ... }'></textarea>
+    <div class="actions"><button id="btnImport" data-i18n="linkedshield.editor.ui.importButton"></button></div>
+    <div class="note" id="fileNote"></div>
+  </fieldset>
+</main>
+
+<script>
+const EMBEDDED_SETTINGS = __LINKEDSHIELD_SETTINGS_JSON__;
+const EMBEDDED_DEFAULTS = __LINKEDSHIELD_DEFAULTS_JSON__;
+/* 各语言的编辑器文案（由模组从 lang/*.json 的 linkedshield.editor.* 抽出后内嵌） */
+const I18N = __LINKEDSHIELD_EDITOR_I18N__;
+const LANGS = [
+  {code:'zh_cn', flag:'🇨🇳', name:'简体中文'},
+  {code:'en_us', flag:'🇺🇸', name:'English (US)'},
+  {code:'en_gb', flag:'🇬🇧', name:'English (UK)'},
+  {code:'ru_ru', flag:'🇷🇺', name:'Русский'},
+];
+let LANG = (function(){
+  const nav = (navigator.language || 'en_us').replace('-', '_').toLowerCase();
+  if (I18N[nav]) return nav;
+  if (nav.startsWith('zh')) return 'zh_cn';
+  if (nav.startsWith('ru')) return 'ru_ru';
+  if (nav === 'en_gb') return 'en_gb';
+  return 'en_us';
+})();
+
+/** 取翻译，缺失时按 en_us → zh_cn 回退；多余参数依次替换 %s。 */
+function t(key, ...args){
+  const dict = I18N[LANG] || {};
+  const fallback = I18N.en_us || {};
+  const last = I18N.zh_cn || {};
+  let s = dict[key] || fallback[key] || last[key] || '';
+  for (const a of args) s = s.replace('%s', a);
+  return s;
+}
+const hasKey = (key) => !!((I18N[LANG] && I18N[LANG][key]) || (I18N.en_us && I18N.en_us[key]));
+const fieldLabel = (p) => t('linkedshield.editor.field.' + p);
+const fieldDesc = (p) => (hasKey('linkedshield.editor.field.' + p + '.desc') ? t('linkedshield.editor.field.' + p + '.desc') : '');
+const groupTitle = (g) => t('linkedshield.editor.group.' + g);
+const groupNote = (g) => (hasKey('linkedshield.editor.group.' + g + '.note') ? t('linkedshield.editor.group.' + g + '.note') : '');
+
+/* 表单控件索引：配置路径 -> 控件，拖动/滚轮改完后用来回写界面上的数字 */
+let CTLS = {};
+
+/** 把某个配置路径的新值同步到左边表单控件上。 */
+function syncCtl(path, value){
+  const entry = CTLS[path];
+  if (!entry) return;
+  if (entry.type === 'bool') entry.ctl.checked = !!value;
+  else entry.ctl.value = (entry.type === 'int') ? Math.round(value) : value;
+}
+
+/* 预览是 1:1 原版比例（1 格 = 1 GUI 单位），所以鼠标位移直接就是配置里的像素值 */
+function guiPerCssPx(){ return 1; }
+
+/** 通用拖动：按住元素拖动，回调拿到（dx, dy）GUI 单位位移。 */
+function bindDrag(el, onDrag, onDone){
+  let dragging = false, lx = 0, ly = 0;
+  el.addEventListener('mousedown', (e)=>{
+    if (e.button !== 0) return;
+    dragging = true; lx = e.clientX; ly = e.clientY;
+    el.classList.add('dragging');
+    e.preventDefault(); e.stopPropagation();
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if (!dragging) return;
+    const k = guiPerCssPx();
+    const dx = (e.clientX - lx) / k, dy = (e.clientY - ly) / k;
+    lx = e.clientX; ly = e.clientY;
+    onDrag(dx, dy);
+  });
+  window.addEventListener('mouseup', ()=>{
+    if (!dragging) return;
+    dragging = false; el.classList.remove('dragging');
+    if (onDone) onDone();
+  });
+}
+
+/** 元素上的滚轮：回调拿到（方向, 是否按住 Shift）。 */
+function bindWheel(el, onWheel){
+  el.addEventListener('wheel', (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    const dir = e.deltaY > 0 ? -1 : 1;
+    onWheel(dir, e.shiftKey);
+  }, { passive: false });
+}
+
+const clampNum = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+/* ---------------- 字段结构（文案全部来自 lang 文件，键 = linkedshield.editor.field.<path>） ---------------- */
+const SCHEMA = [
+ {g:'party', f:[
+   {p:'party.maxPartySize', t:'int', min:2, max:40},
+   {p:'party.inviteTimeoutSeconds', t:'int', min:10, max:600},
+   {p:'party.allowCrossDimension', t:'bool'},
+   {p:'party.friendlyFire', t:'bool'},
+   {p:'party.nearbyRadius', t:'float', min:2, max:64, step:1},
+ ]},
+ {g:'shield', f:[
+   {p:'shield.defaultMaxShield', t:'float', min:1, max:100000, step:1},
+   {p:'shield.defaultCurrentShield', t:'float', min:0, max:100000, step:1},
+   {p:'shield.minPierceRatio', t:'float', min:0, max:1, step:0.01},
+   {p:'shield.rangedDamageFullyAbsorbed', t:'bool'},
+   {p:'shield.meleeDrainsShield', t:'bool'},
+   {p:'shield.shieldBreakRegenPenaltySeconds', t:'float', min:0, max:60, step:0.5},
+ ]},
+ {g:'damage', f:[
+   {p:'damageRules.useDamageTypeRules', t:'bool'},
+   {p:'damageRules.projectileBehavior', t:'enum', opts:['FULL','PIERCE','NONE']},
+   {p:'damageRules.dotBehavior', t:'enum', opts:['FULL','PIERCE','NONE']},
+   {p:'damageRules.meleeBehavior', t:'enum', opts:['FULL','PIERCE','NONE']},
+   {p:'damageRules.explosionBehavior', t:'enum', opts:['FULL','PIERCE','NONE']},
+   {p:'damageRules.magicBehavior', t:'enum', opts:['FULL','PIERCE','NONE']},
+   {p:'damageRules.environmentBehavior', t:'enum', opts:['FULL','PIERCE','NONE']},
+   {p:'damageRules.otherBehavior', t:'enum', opts:['FULL','PIERCE','NONE']},
+   {p:'damageRules.extraProjectileTypes', t:'text'},
+   {p:'damageRules.extraMeleeTypes', t:'text'},
+   {p:'damageRules.extraDotTypes', t:'text'},
+   {p:'damageRules.fallbackToEntityType', t:'bool'},
+ ]},
+ {g:'linkedshield', f:[
+   {p:'linkedshield.enabled', t:'bool'},
+   {p:'linkedshield.rateOneMember', t:'float', min:0, max:200, step:0.05},
+   {p:'linkedshield.rateTwoMembers', t:'float', min:0, max:200, step:0.05},
+   {p:'linkedshield.rateThreeOrMore', t:'float', min:0, max:200, step:0.05},
+   {p:'linkedshield.soloRate', t:'float', min:0, max:200, step:0.05},
+   {p:'linkedshield.radius', t:'float', min:1, max:128, step:0.5},
+   {p:'linkedshield.startDelaySeconds', t:'float', min:0, max:60, step:0.5},
+   {p:'linkedshield.requireOutOfCombat', t:'bool'},
+   {p:'linkedshield.outOfCombatDelaySeconds', t:'float', min:0, max:60, step:0.5},
+   {p:'linkedshield.requireSameDimension', t:'bool'},
+   {p:'linkedshield.stopWhenFull', t:'bool'},
+ ]},
+ {g:'combat', f:[
+   {p:'combat.combatTagSeconds', t:'float', min:0, max:60, step:0.5},
+ ]},
+ {g:'partyList', f:[
+   {p:'hud.enabled', t:'bool'},
+   {p:'hud.partyList.visible', t:'bool'},
+   {p:'hud.partyList.anchor', t:'enum', opts:['LEFT','RIGHT']},
+   {p:'hud.partyList.scale', t:'float', min:0.4, max:2, step:0.05},
+   {p:'hud.partyList.offsetX', t:'int', min:0, max:400},
+   {p:'hud.partyList.offsetY', t:'int', min:0, max:600},
+   {p:'hud.partyList.rowWidth', t:'int', min:60, max:300},
+   {p:'hud.partyList.rowHeight', t:'int', min:10, max:60},
+   {p:'hud.partyList.rowGap', t:'int', min:0, max:20},
+   {p:'hud.partyList.maxRows', t:'int', min:1, max:16},
+   {p:'hud.partyList.namePosition', t:'enum', opts:['ABOVE_BAR','INSIDE_BAR','LEFT']},
+   {p:'hud.partyList.nameOffsetX', t:'int', min:-60, max:60},
+   {p:'hud.partyList.nameOffsetY', t:'int', min:-30, max:30},
+   {p:'hud.partyList.showShieldBar', t:'bool'},
+   {p:'hud.partyList.showMemberIndex', t:'bool'},
+   {p:'hud.partyList.backgroundOpacity', t:'float', min:0, max:1, step:0.05},
+   {p:'hud.partyList.hideWhenSolo', t:'bool'},
+   {p:'hud.partyList.sortMode', t:'enum', opts:['LEADER_FIRST','NAME','DISTANCE']},
+ ]},
+ {g:'selfShield', f:[
+   {p:'hud.selfShield.visible', t:'bool'},
+   {p:'hud.selfShield.anchor', t:'enum', opts:['ABOVE_HEALTH','BELOW_HEALTH','ABOVE_HOTBAR','CUSTOM']},
+   {p:'hud.selfShield.offsetX', t:'int', min:-200, max:200},
+   {p:'hud.selfShield.offsetY', t:'int', min:-80, max:80},
+   {p:'hud.selfShield.width', t:'int', min:20, max:220},
+   {p:'hud.selfShield.height', t:'int', min:1, max:14},
+   {p:'hud.selfShield.showBar', t:'bool'},
+   {p:'hud.selfShield.showText', t:'bool'},
+   {p:'hud.selfShield.textPosition', t:'enum', opts:['RIGHT','LEFT','CENTER']},
+   {p:'hud.selfShield.barColor', t:'color'},
+   {p:'hud.selfShield.numberFormat', t:'enum', opts:['CURRENT','CURRENT_MAX','RATIO']},
+ ]},
+ {g:'icon', f:[
+   {p:'hud.linkedshieldIcon.visible', t:'bool'},
+   {p:'hud.linkedshieldIcon.scale', t:'float', min:0.5, max:3, step:0.05},
+   {p:'hud.linkedshieldIcon.offsetX', t:'int', min:-80, max:80},
+   {p:'hud.linkedshieldIcon.offsetY', t:'int', min:-40, max:40},
+   {p:'hud.linkedshieldIcon.showCount', t:'bool'},
+ ]},
+ {g:'misc', f:[
+   {p:'misc.generateHtmlEditor', t:'bool'},
+ ]},
+ {g:'api', f:[]},
+];
+
+/* ---------------- 工具函数 ---------------- */
+const $ = s => document.querySelector(s);
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function get(obj, path){ return path.split('.').reduce((a,k)=> (a==null?undefined:a[k]), obj); }
+function set(obj, path, val){
+  const ks = path.split('.'); const last = ks.pop();
+  let cur = obj; for (const k of ks){ if (typeof cur[k] !== 'object' || cur[k] === null) cur[k] = {}; cur = cur[k]; }
+  cur[last] = val;
+}
+function deepMerge(base, over){
+  if (typeof base !== 'object' || base === null || Array.isArray(base)) return over === undefined ? base : over;
+  const out = Array.isArray(over) ? over.slice() : Object.assign({}, base);
+  if (typeof over === 'object' && over !== null && !Array.isArray(over)){
+    for (const k of Object.keys(over)){
+      out[k] = (k in base) ? deepMerge(base[k], over[k]) : over[k];
+    }
+  }
+  return out;
+}
+let data = deepMerge(clone(EMBEDDED_DEFAULTS), clone(EMBEDDED_SETTINGS));
+
+/* ---------------- 静态文案（含国旗切换） ---------------- */
+function applyStaticI18n(){
+  document.documentElement.lang = LANG.replace('_', '-');
+  document.title = t('linkedshield.editor.ui.title');
+  $('#title').textContent = t('linkedshield.editor.ui.title');
+  $('#subtitle').innerHTML = t('linkedshield.editor.ui.subtitle', '<code>config/linkedshield/settings.json</code>');
+  $('#previewLegend').textContent = t('linkedshield.editor.ui.preview');
+  $('#previewHint').textContent = t('linkedshield.editor.ui.previewHint');
+  $('#legendHp').textContent = t('linkedshield.editor.ui.legendHp');
+  $('#legendShield').textContent = t('linkedshield.editor.ui.legendShield');
+  $('#legendName').textContent = t('linkedshield.editor.ui.legendName');
+  $('#legendVanilla').textContent = t('linkedshield.editor.ui.legendVanilla');
+  $('#vanillaNote').textContent = t('linkedshield.editor.ui.vanillaNote');
+  $('#showVanillaLabel').innerHTML = `${t('linkedshield.editor.ui.showVanilla')}<span class="k">vanilla reference</span>`;
+  $('#importLegend').textContent = t('linkedshield.editor.ui.import');
+  $('#importHint').textContent = t('linkedshield.editor.ui.importHint');
+  $('#fileNote').innerHTML = t('linkedshield.editor.ui.fileNote');
+  for (const el of document.querySelectorAll('[data-i18n]')){
+    el.textContent = t(el.getAttribute('data-i18n'));
+  }
+  const bar = $('#langBar');
+  bar.innerHTML = '';
+  const lab = document.createElement('span'); lab.className = 'lab'; lab.textContent = t('linkedshield.editor.ui.lang') + ':';
+  bar.appendChild(lab);
+  for (const l of LANGS){
+    const b = document.createElement('button');
+    b.className = 'flagBtn' + (l.code === LANG ? ' active' : '');
+    b.innerHTML = `${l.flag} <small>${l.name}</small>`;
+    b.addEventListener('click', ()=>setLang(l.code));
+    bar.appendChild(b);
+  }
+}
+function setLang(code){
+  LANG = code;
+  applyStaticI18n();
+  buildForm();
+  renderPreview();
+}
+
+/* ---------------- 生成表单 ---------------- */
+function buildForm(){
+  const host = $('#form'); host.innerHTML = '';
+  CTLS = {};
+  for (const group of SCHEMA){
+    const note = groupNote(group.g);
+    const fs = document.createElement('fieldset');
+    fs.innerHTML = `<legend>${groupTitle(group.g)}</legend>` + (note ? `<div class="hint">${note}</div>` : '');
+    for (const f of group.f){
+      const row = document.createElement('div'); row.className = 'row';
+      const desc = fieldDesc(f.p);
+      const lab = document.createElement('label');
+      lab.innerHTML = `${fieldLabel(f.p)}<span class="k">${f.p}${desc ? ' — ' + desc : ''}</span>`;
+      row.appendChild(lab);
+      let ctl;
+      const val = get(data, f.p);
+      if (f.t === 'bool'){
+        const wrap = document.createElement('div'); wrap.className = 'chk';
+        ctl = document.createElement('input'); ctl.type = 'checkbox'; ctl.checked = !!val; wrap.appendChild(ctl);
+        row.appendChild(wrap);
+      } else if (f.t === 'enum'){
+        ctl = document.createElement('select');
+        for (const o of f.opts){
+          const op = document.createElement('option'); op.value = o; op.textContent = o;
+          if (o === val) op.selected = true; ctl.appendChild(op);
+        }
+        row.appendChild(ctl);
+      } else if (f.t === 'color'){
+        ctl = document.createElement('input'); ctl.type = 'color'; ctl.value = val || '#4fc3f7';
+        row.appendChild(ctl);
+      } else {
+        ctl = document.createElement('input');
+        ctl.type = (f.t === 'text') ? 'text' : 'number';
+        if (f.min !== undefined) ctl.min = f.min;
+        if (f.max !== undefined) ctl.max = f.max;
+        ctl.step = f.step !== undefined ? f.step : (f.t === 'int' ? 1 : 0.05);
+        ctl.value = val;
+        row.appendChild(ctl);
+      }
+      const commit = () => {
+        let v;
+        if (f.t === 'bool') v = ctl.checked;
+        else if (f.t === 'int') v = Math.round(parseFloat(ctl.value) || 0);
+        else if (f.t === 'float') v = parseFloat(ctl.value) || 0;
+        else v = ctl.value;
+        set(data, f.p, v);
+        renderPreview();
+      };
+      ctl.addEventListener('input', commit);
+      ctl.addEventListener('change', commit);
+      CTLS[f.p] = { ctl, type: f.t };
+      fs.appendChild(row);
+    }
+    host.appendChild(fs);
+  }
+}
+
+/* ---------------- 预览（1:1 原版比例，无缩放） ---------------- */
+function partyNamePositionStyle(row, pl){
+  const nm = row.querySelector('.nm');
+  const offX = pl.nameOffsetX | 0, offY = pl.nameOffsetY | 0;
+  const left = (pl.showMemberIndex ? 12 : 4) + offX;
+  if (pl.namePosition === 'LEFT'){
+    nm.style.left = 'auto'; nm.style.right = '100%'; nm.style.marginRight = (4 - offX) + 'px';
+    nm.style.top = 'calc(50% - 5px + ' + offY + 'px)';
+  } else if (pl.namePosition === 'INSIDE_BAR'){
+    nm.style.left = left + 'px'; nm.style.right = 'auto'; nm.style.marginRight = '0';
+    nm.style.top = 'calc(100% - 7px + ' + offY + 'px)';
+  } else { /* ABOVE_BAR */
+    nm.style.left = left + 'px'; nm.style.right = 'auto'; nm.style.marginRight = '0';
+    nm.style.top = (2 + offY) + 'px';
+  }
+}
+
+/**
+ * 原版 HUD 参照物，坐标与原版 Gui 完全一致（GUI 单位）：
+ * 快捷栏 182x22 贴底居中；经验条 182x5 在其上方 3 格；生命/饥饿 y = 高度 - 39；
+ * 生命从 x = 宽度/2 - 91 往右，饥饿从 x = 宽度/2 + 91 往左。
+ */
+function renderVanillaRefs(Wu, Hu){
+  const host = $('#vhud');
+  host.innerHTML = '';
+  const show = $('#showVanilla').checked;
+  $('#vanilla').style.display = show ? 'block' : 'none';
+  if (!show) return;
+
+  const left = Math.round(Wu / 2 - 91);
+  const rowY = Math.round(Hu - 39);
+  for (let i = 0; i < 10; i++){
+    const h = document.createElement('div');
+    h.className = 'vheart' + (i < 8 ? '' : ' empty');
+    h.style.left = (left + i * 8) + 'px';
+    h.style.top = rowY + 'px';
+    host.appendChild(h);
+  }
+  for (let i = 0; i < 10; i++){
+    const f = document.createElement('div');
+    f.className = 'vfood' + (i < 7 ? '' : ' empty');
+    f.style.left = (left + 182 - 8 - i * 8) + 'px';
+    f.style.top = rowY + 'px';
+    host.appendChild(f);
+  }
+  const xpBg = document.createElement('div');
+  xpBg.className = 'vxpbg';
+  xpBg.style.left = left + 'px';
+  xpBg.style.top = Math.round(Hu - 29) + 'px';
+  host.appendChild(xpBg);
+  const xp = document.createElement('div');
+  xp.className = 'vxp';
+  xp.style.left = (left + 1) + 'px';
+  xp.style.top = Math.round(Hu - 28) + 'px';
+  xp.style.width = Math.round(180 * 0.62) + 'px';
+  host.appendChild(xp);
+  const hb = document.createElement('div');
+  hb.className = 'vhotbar';
+  hb.style.left = left + 'px';
+  hb.style.top = Math.round(Hu - 22) + 'px';
+  host.appendChild(hb);
+  for (let i = 0; i < 9; i++){
+    const s = document.createElement('div');
+    s.className = 'vslot' + (i === 0 ? ' sel' : '');
+    s.style.left = (left + 3 + i * 20) + 'px';
+    s.style.top = Math.round(Hu - 21) + 'px';
+    host.appendChild(s);
+  }
+  const tag = document.createElement('div');
+  tag.className = 'vtag';
+  tag.textContent = 'vanilla HUD';
+  tag.style.left = (left + 186) + 'px';
+  tag.style.top = Math.round(Hu - 24) + 'px';
+  host.appendChild(tag);
+}
+
+function renderPreview(){
+  const pl = data.hud.partyList, ss = data.hud.selfShield;
+  const screen = document.querySelector('.screen');
+  // 预览区就是“GUI 单位”坐标系：1 CSS px = 1 GUI 单位，不做任何缩放
+  const Wu = screen.clientWidth, Hu = screen.clientHeight;
+  renderVanillaRefs(Wu, Hu);
+
+  /* 队友面板 */
+  const list = $('#plist');
+  list.innerHTML = '';
+  list.style.display = (data.hud.enabled && pl.visible) ? 'flex' : 'none';
+  const isRight = (pl.anchor || 'LEFT').toUpperCase() === 'RIGHT';
+  list.style[isRight ? 'right' : 'left'] = pl.offsetX + 'px';
+  list.style[isRight ? 'left' : 'right'] = 'auto';
+  list.style.top = pl.offsetY + 'px';
+  list.style.gap = pl.rowGap + 'px';
+  list.style.transform = `scale(${pl.scale || 1})`;     // 这是配置项本身，游戏内同样生效
+  list.style.transformOrigin = isRight ? 'top right' : 'top left';
+  const rows = Math.min(Math.max(pl.maxRows, 1), 6);
+  const demo = [
+    {n:'Aria_Light', hp:1.0, sh:1.0}, {n:'Kupo Knight', hp:0.78, sh:0.55},
+    {n:'Moogle', hp:0.34, sh:0.9}, {n:'Estinien', hp:0.92, sh:0.2},
+    {n:'Y\’shtola', hp:0.12, sh:0.0}, {n:'Thancred', hp:0.63, sh:0.75},
+  ];
+  for (let i = 0; i < rows; i++){
+    const d = demo[i % demo.length];
+    const row = document.createElement('div');
+    row.className = 'prow';
+    row.style.width = pl.rowWidth + 'px';
+    row.style.height = pl.rowHeight + 'px';
+    row.style.borderLeftColor = (i === 0) ? '#ffc85c' : '#6e8ba6';
+    row.innerHTML =
+      `<div class="bg" style="background:rgba(8,12,18,${pl.backgroundOpacity})"></div>` +
+      `<div class="hpbg"></div>` +
+      `<div class="hp" style="width:${((pl.rowWidth-2)*d.hp).toFixed(0)}px;background:${hpColor(d.hp)}"></div>` +
+      (pl.showShieldBar ? `<div class="shbg"></div><div class="sh" style="width:${((pl.rowWidth-2)*d.sh).toFixed(0)}px"></div>` : '') +
+      (pl.showMemberIndex ? `<div class="idx">${i+1}</div>` : '') +
+      `<div class="nm">${d.n}</div>`;
+    list.appendChild(row);
+    partyNamePositionStyle(row, pl);
+  }
+
+  /* 自身护盾条：与原版生命条/快捷栏同一套坐标 */
+  const wrap = $('#selfwrap');
+  const hotbarTop = Hu - 34;                            // 原版快捷栏顶部（与游戏内 SelfShieldLayer 一致）
+  let baseY;
+  switch ((ss.anchor || 'ABOVE_HEALTH').toUpperCase()){
+    case 'ABOVE_HOTBAR': baseY = hotbarTop - 26; break;
+    case 'BELOW_HEALTH': baseY = hotbarTop - 9;  break;
+    case 'CUSTOM':       baseY = hotbarTop - 24; break;
+    default:             baseY = hotbarTop - 24; break;  // 生命条正上方
+  }
+  wrap.style.left = Math.round(Wu / 2 - 91 + (ss.offsetX | 0)) + 'px';
+  wrap.style.top = Math.round(baseY + (ss.offsetY | 0)) + 'px';
+  wrap.style.display = (data.hud.enabled && ss.visible) ? 'block' : 'none';
+  const sh = $('#selfshield');
+  sh.style.width = ss.width + 'px';
+  sh.style.height = ss.height + 'px';
+  sh.style.top = (-ss.height - 3) + 'px';
+  sh.style.display = ss.showBar ? 'block' : 'none';
+  sh.querySelector('.sb').style.background = ss.barColor;
+  sh.querySelector('.sb').style.opacity = 0.85;
+  const txt = $('#selfshieldtext');
+  txt.style.display = (ss.showText && ss.showBar) ? 'block' : 'none';
+  const cur = data.shield.defaultCurrentShield, max = Math.max(1, data.shield.defaultMaxShield);
+  txt.textContent = ss.numberFormat === 'RATIO'
+      ? Math.round(Math.min(1, cur / max) * 100) + '%'
+      : (ss.numberFormat === 'CURRENT' ? Math.round(cur) : Math.round(cur) + ' / ' + Math.round(max));
+  const tp = (ss.textPosition || 'RIGHT').toUpperCase();
+  if (tp === 'LEFT'){ txt.style.left = '-4px'; txt.style.right = 'auto'; txt.style.transform = 'translateX(-100%)'; }
+  else if (tp === 'CENTER'){ txt.style.left = '50%'; txt.style.right = 'auto'; txt.style.transform = 'translateX(-50%)'; }
+  else { txt.style.right = '0'; txt.style.left = 'auto'; txt.style.transform = 'none'; }
+}
+function hpColor(r){
+  if (r > 0.6) return '#5ec46a';
+  if (r > 0.3) return '#e0c04b';
+  return '#e04b4b';
+}
+
+/* ---------------- 保存：默认写回 html 所在文件夹，另存为才弹文件对话框 ---------------- */
+function status(msg, ok){
+  const el = $('#status'); el.textContent = msg; el.style.color = ok === false ? '#ff8a8a' : '#ffd479';
+  clearTimeout(status._t); status._t = setTimeout(()=>{ el.textContent = ''; }, 8000);
+}
+const DB_NAME = 'linkedshield-editor', STORE = 'handles', DIR_KEY = 'settingsDir';
+let DIR_HANDLE = null;
+
+function idb(){
+  return new Promise((res, rej)=>{
+    if (!window.indexedDB) return rej(new Error('no indexedDB'));
+    const rq = indexedDB.open(DB_NAME, 1);
+    rq.onupgradeneeded = ()=> rq.result.createObjectStore(STORE);
+    rq.onsuccess = ()=> res(rq.result);
+    rq.onerror = ()=> rej(rq.error);
+  });
+}
+async function idbGet(key){
+  try{
+    const db = await idb();
+    return await new Promise((res, rej)=>{
+      const tx = db.transaction(STORE, 'readonly');
+      const rq = tx.objectStore(STORE).get(key);
+      rq.onsuccess = ()=> res(rq.result || null);
+      rq.onerror = ()=> rej(rq.error);
+    });
+  }catch(e){ return null; }
+}
+async function idbSet(key, value){
+  try{
+    const db = await idb();
+    await new Promise((res, rej)=>{
+      const tx = db.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(value, key);
+      tx.oncomplete = ()=> res();
+      tx.onerror = ()=> rej(tx.error);
+    });
+  }catch(e){ /* 隐私模式等忽略 */ }
+}
+/** 拿到已授权的目录句柄（不会主动弹窗，除非句柄已存在但权限被撤销）。 */
+async function currentDir(promptIfNeeded){
+  const candidates = [DIR_HANDLE];
+  if (!DIR_HANDLE) candidates.push(await idbGet(DIR_KEY));
+  for (const h of candidates){
+    if (!h) continue;
+    try{
+      const q = await h.queryPermission({mode:'readwrite'});
+      if (q === 'granted'){ DIR_HANDLE = h; return h; }
+      if (promptIfNeeded && await h.requestPermission({mode:'readwrite'}) === 'granted'){ DIR_HANDLE = h; return h; }
+    }catch(e){ /* 句柄失效 */ }
+  }
+  return null;
+}
+async function writeToDir(dir, text){
+  const fh = await dir.getFileHandle('settings.json', {create:true});
+  const w = await fh.createWritable();
+  await w.write(new Blob([text], {type:'application/json'}));
+  await w.close();
+}
+function jsonText(){ return JSON.stringify(data, null, 2) + '\n'; }
+
+/** 保存：直接写回之前授权过的文件夹（也就是 html 所在目录），没有授权则提示一次。 */
+async function saveInPlace(){
+  if (!window.showDirectoryPicker){
+    return downloadJson();   // Firefox 等：退回下载
+  }
+  let dir = await currentDir(false);
+  if (!dir){
+    status(t('linkedshield.editor.ui.grantNeeded'), false);
+    try{
+      dir = await window.showDirectoryPicker({mode:'readwrite', id:'linkedshield-settings'});
+    }catch(e){
+      if (e && e.name === 'AbortError'){ status('—', false); return; }
+      return downloadJson();
+    }
+    DIR_HANDLE = dir;
+    await idbSet(DIR_KEY, dir);
+  }
+  try{
+    await writeToDir(dir, jsonText());
+    status(t('linkedshield.editor.ui.savedTo', 'settings.json'), true);
+  }catch(e){
+    status(String(e.message), false);
+  }
+}
+/** 另存为：走浏览器文件对话框。 */
+async function saveAs(){
+  const blob = new Blob([jsonText()], {type:'application/json'});
+  if (window.showSaveFilePicker){
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'settings.json',
+        types: [{description:'LinkedShield settings', accept:{'application/json':['.json']}}],
+      });
+      const w = await handle.createWritable();
+      await w.write(blob); await w.close();
+      status(t('linkedshield.editor.ui.savedTo', handle.name), true);
+      return;
+    }catch(e){
+      if (e && e.name === 'AbortError'){ status('—', false); return; }
+    }
+  }
+  downloadJson();
+}
+function downloadJson(){
+  const blob = new Blob([jsonText()], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'settings.json';
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  status(t('linkedshield.editor.ui.downloaded'), true);
+}
+
+$('#btnSave').addEventListener('click', ()=>saveInPlace());
+$('#btnSaveAs').addEventListener('click', ()=>saveAs());
+$('#btnCopy').addEventListener('click', async ()=>{
+  try{ await navigator.clipboard.writeText(jsonText()); status(t('linkedshield.editor.ui.copyOk'), true); }
+  catch(e){ $('#importBox').value = jsonText(); status(t('linkedshield.editor.ui.copyFail'), false); }
+});
+$('#btnReset').addEventListener('click', ()=>{
+  data = clone(EMBEDDED_DEFAULTS); buildForm(); renderPreview(); status(t('linkedshield.editor.ui.resetDone'), true);
+});
+$('#btnImport').addEventListener('click', ()=>{
+  try{
+    const parsed = JSON.parse($('#importBox').value);
+    data = deepMerge(clone(EMBEDDED_DEFAULTS), parsed);
+    buildForm(); renderPreview(); status(t('linkedshield.editor.ui.imported'), true);
+  }catch(e){ status(t('linkedshield.editor.ui.badJson', e.message), false); }
+});
+$('#showVanilla').addEventListener('change', renderPreview);
+window.addEventListener('resize', renderPreview);
+
+/* ---------------- 预览里直接拖动 / 滚轮改数值 ---------------- */
+function bindPreviewInteractions(){
+  const plist = $('#plist'), selfwrap = $('#selfwrap');
+
+  bindDrag(plist, (dx, dy)=>{
+    const pl = data.hud.partyList;
+    const right = (pl.anchor || 'LEFT').toUpperCase() === 'RIGHT';
+    pl.offsetX = Math.round(clampNum((pl.offsetX || 0) + (right ? -dx : dx), -400, 600));
+    pl.offsetY = Math.round(clampNum((pl.offsetY || 0) + dy, -200, 800));
+    syncCtl('hud.partyList.offsetX', pl.offsetX);
+    syncCtl('hud.partyList.offsetY', pl.offsetY);
+    renderPreview();
+  }, ()=>status(t('linkedshield.editor.ui.dragList'), true));
+
+  bindWheel(plist, (dir)=>{
+    const pl = data.hud.partyList;
+    pl.scale = Math.round(clampNum((pl.scale || 1) + dir * 0.05, 0.4, 2.5) * 100) / 100;
+    syncCtl('hud.partyList.scale', pl.scale);
+    renderPreview();
+    status(t('linkedshield.editor.ui.scaleMsg', pl.scale), true);
+  });
+
+  bindDrag(selfwrap, (dx, dy)=>{
+    const ss = data.hud.selfShield;
+    ss.offsetX = Math.round(clampNum((ss.offsetX || 0) + dx, -600, 600));
+    ss.offsetY = Math.round(clampNum((ss.offsetY || 0) + dy, -300, 300));
+    syncCtl('hud.selfShield.offsetX', ss.offsetX);
+    syncCtl('hud.selfShield.offsetY', ss.offsetY);
+    renderPreview();
+  }, ()=>status(t('linkedshield.editor.ui.dragShield'), true));
+
+  bindWheel(selfwrap, (dir, shift)=>{
+    const ss = data.hud.selfShield;
+    if (shift){
+      ss.height = clampNum(Math.round((ss.height || 5) + dir), 1, 20);
+      syncCtl('hud.selfShield.height', ss.height);
+      status(t('linkedshield.editor.ui.heightMsg', ss.height), true);
+    } else {
+      ss.width = clampNum(Math.round((ss.width || 81) + dir * 4), 12, 400);
+      syncCtl('hud.selfShield.width', ss.width);
+      status(t('linkedshield.editor.ui.widthMsg', ss.width), true);
+    }
+    renderPreview();
+  });
+}
+
+applyStaticI18n();
+buildForm();
+bindPreviewInteractions();
+renderPreview();
+/* 页面打开时如果之前已授权过目录，就预热句柄（不会弹窗） */
+currentDir(false).then(h=>{ if (h) status(t('linkedshield.editor.ui.dirReady'), true); });
+</script>
+</body>
+</html>

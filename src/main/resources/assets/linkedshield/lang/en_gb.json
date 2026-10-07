@@ -1,0 +1,14 @@
+{
+  "_comment": "en_gb：只放与 en_us 不同的条目，其余由 Minecraft 自动回退到 en_us（模组语言文件标准做法）。",
+
+  "linkedshield.command.damage.hint": "FULL = the shield absorbs everything and loses the same amount; PIERCE = damage passes through by shield percentage; NONE = the shield ignores it. Single type: /linkedshield damage <damage type>",
+  "linkedshield.editor.group.shield.note": "Settlement happens after armour, enchantments and effects, before absorption — the shield loses exactly the damage that would have reached your health. Pierce ratio = clamp(1 - shield/max, minPierceRatio, 1)",
+  "linkedshield.editor.group.damage.note": "Damage is classified by damage type and vanilla tags, not by who hit you. FULL = fully absorbed; PIERCE = percentage pierce; NONE = the shield ignores it. Percentages are per cent of the incoming damage.",
+  "linkedshield.editor.field.damageRules.otherBehavior": "Other/unrecognised (usually modded)",
+  "linkedshield.editor.field.damageRules.explosionBehavior.desc": "PIERCE by default: exactly the same percentage formula as melee.",
+  "linkedshield.editor.field.hud.selfShield.barColor": "Bar colour",
+  "linkedshield.editor.ui.vanillaNote": "The grey elements are drawn with the vanilla layout, so you can line your shield bar and party panel up against them.",
+  "linkedshield.editor.ui.preview": "Live HUD preview",
+  "linkedshield.editor.ui.previewHint": "Drag to move, scroll to resize: wheel on the party panel = overall scale; wheel on the shield bar = width, Shift+wheel = height. Changes are written straight into the form on the left; click \"Save settings.json\" to store them.",
+  "key.categories.linkedshield": "LinkedShield Party"
+}

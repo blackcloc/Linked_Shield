@@ -1,0 +1,40 @@
+license="${mod_license}"
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="连携护盾 Linked Shield"
+authors="${mod_authors}"
+description='''
+连携护盾（Linked Shield）—— FF14 风格小队组队 + 护盾 / 连携回盾系统。
+
+【小队】按 U 打开组队界面：左边是队伍名与队内玩家（自己会显示为“（你）”），
+右边是 10 格内的附近玩家，可一键邀请；收到邀请时右上角出现小点提示。
+聊天栏指令：/party invite|accept|deny|leave|kick|disband|rename|list|info。
+
+【护盾】护盾条绘制在玩家血条正上方。
+- 投射物（箭、三叉戟、火球…）与持续伤害（火焰、岩浆、毒、凋零、冰冻）由护盾全额抵挡
+- 近战与爆炸（TNT、床、水晶）按护盾百分比穿盾：
+  穿盾比例 = clamp(1 - 当前护盾/最大护盾, minPierceRatio, 1)，满盾仍有 10% 强制穿盾
+- 结算发生在护甲/附魔减伤之后，护盾不会替护甲买单
+
+【连携】身边有队友且脱战后自动回盾，队友越多越快（默认 2.5 / 3.75 / 5 点每秒，半径 10 格）。
+连携生效时血条旁边会显示蓝色盾牌图标，右下角数字为连携人数（含自己）。
+
+【配置】首次启动在 config/linkedshield/ 生成 settings.json 与可直接点击打开的 config_editor.html，
+可修改小队上限、护盾值、显示位置、连携速率等；游戏内 /linkedshield reload 热重载。
+'''
+
+[[dependencies.${mod_id}]]
+    modId="neoforge"
+    type="required"
+    versionRange="[${neo_version},)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="BOTH"
